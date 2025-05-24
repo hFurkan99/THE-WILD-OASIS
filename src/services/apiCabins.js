@@ -4,8 +4,20 @@ export async function getCabins() {
   const { data, error } = await supabase.from("cabins").select("*");
 
   if (error) {
-    console.error("Error fetching cabins:", error);
     throw new Error("Error fetching cabins: " + error.message);
+  }
+
+  return data;
+}
+
+export async function deleteCabin(cabinId) {
+  const { data, error } = await supabase
+    .from("cabins")
+    .delete()
+    .eq("id", cabinId);
+
+  if (error) {
+    throw new Error("Error deleting cabin: " + error.message);
   }
 
   return data;
