@@ -1,77 +1,120 @@
-import styled from "styled-components";
-
 import Input from "../../ui/Input";
 import Form from "../../ui/Form";
 import Button from "../../ui/Button";
 import FileInput from "../../ui/FileInput";
 import Textarea from "../../ui/Textarea";
-
-const FormRow = styled.div`
-  display: grid;
-  align-items: center;
-  grid-template-columns: 24rem 1fr 1.2fr;
-  gap: 2.4rem;
-
-  padding: 1.2rem 0;
-
-  &:first-child {
-    padding-top: 0;
-  }
-
-  &:last-child {
-    padding-bottom: 0;
-  }
-
-  &:not(:last-child) {
-    border-bottom: 1px solid var(--color-grey-100);
-  }
-
-  &:has(button) {
-    display: flex;
-    justify-content: flex-end;
-    gap: 1.2rem;
-  }
-`;
-
-const Label = styled.label`
-  font-weight: 500;
-`;
-
-const Error = styled.span`
-  font-size: 1.4rem;
-  color: var(--color-red-700);
-`;
+import { useForm } from "react-hook-form";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { createCabin } from "../../services/apiCabins";
+import toast from "react-hot-toast";
+import FormRow from "../../ui/FormRow";
 
 function CreateCabinForm() {
+  const { register, handleSubmit, reset, formState } = useForm();
+  const { errors } = formState;
+
+  const queryClint = useQueryClient();
+
+  const { mutate, isPending: isCreating } = useMutation({
+    mutationFn: createCabin,
+    onSuccess: () => {
+      toast.success("Cabin created successfully!");
+      queryClint.invalidateQueries({ queryKey: ["cabins"] });
+      reset();
+    },
+    onError: (error) => {
+      toast.error("Error creating cabin: " + error.message);
+    },
+  });
+
+  function onSubmit(data) {
+    mutate(data);
+  }
+
+  function onerror(errors) {}
+
   return (
-    <Form>
-      <FormRow>
-        <Label htmlFor="name">Cabin name</Label>
-        <Input type="text" id="name" />
+    <Form onSubmit={handleSubmit(onSubmit, onerror)}>
+      <FormRow label="Cabin name" error={errors?.name?.message}>
+        <Input
+          type="text"
+          id="name"
+          placeholder="Enter cabin name"
+          disabled={isCreating}
+          {...register("name", { required: "This field is required" })}
+        />
       </FormRow>
 
-      <FormRow>
-        <Label htmlFor="maxCapacity">Maximum capacity</Label>
-        <Input type="number" id="maxCapacity" />
+      <FormRow label="Maximum capacity" error={errors?.maxCapacity?.message}>
+        <Input
+          type="number"
+          id="maxCapacity"
+          placeholder="Enter maximum capacity"
+          disabled={isCreating}
+          {...register("maxCapacity", {
+            required: "This field is required",
+            min: {
+              value: 1,
+              message: "Capacity must be at least 1",
+            },
+          })}
+        />
       </FormRow>
 
-      <FormRow>
-        <Label htmlFor="regularPrice">Regular price</Label>
-        <Input type="number" id="regularPrice" />
+      <FormRow label="Regular price" error={errors?.regularPrice?.message}>
+        <Input
+          type="number"
+          id="regularPrice"
+          placeholder="Enter regular price"
+          disabled={isCreating}
+          {...register("regularPrice", { required: "This field is required" })}
+        />
       </FormRow>
 
-      <FormRow>
-        <Label htmlFor="discount">Discount</Label>
-        <Input type="number" id="discount" defaultValue={0} />
+      <FormRow label="Discount" error={errors?.discount?.message}>
+        <Input
+          type="number"
+          id="discount"
+          placeholder="Enter discount percentage"
+          disabled={isCreating}
+          defaultValue={0}
+          {...register("discount", {
+            required: "This field is required",
+            min: {
+              value: 0,
+              message: "Discount cannot be negative",
+            },
+            validate: (value) => value < 100 || "Discount cannot exceed 100%",
+            // max: {
+            //   value: 100,
+            //   message: "Discount cannot exceed 100%",
+            // },
+          })}
+        />
       </FormRow>
 
-      <FormRow>
-        <Label htmlFor="description">Description for website</Label>
-        <Textarea type="number" id="description" defaultValue="" />
+      <FormRow label="Description" error={errors?.description?.message}>
+        <Textarea
+          type="number"
+          id="description"
+          placeholder="Enter cabin description"
+          disabled={isCreating}
+          defaultValue=""
+          {...register("description", {
+            required: "This field is required",
+            minLength: {
+              value: 10,
+              message: "Description must be at least 10 characters long",
+            },
+            maxLength: {
+              value: 500,
+              message: "Description cannot exceed 500 characters",
+            },
+          })}
+        />
       </FormRow>
 
-      <FormRow>
-        <Label htmlFor="image">Cabin photo</Label>
+      <FormRow label="Cabin photo">
         <FileInput id="image" accept="image/*" />
       </FormRow>
 
@@ -80,7 +123,7 @@ function CreateCabinForm() {
         <Button variation="secondary" type="reset">
           Cancel
         </Button>
-        <Button>Edit cabin</Button>
+        <Button disabled={isCreating}>Add cabin</Button>
       </FormRow>
     </Form>
   );

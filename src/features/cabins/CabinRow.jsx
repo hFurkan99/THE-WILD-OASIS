@@ -58,8 +58,8 @@ export default function CabinRow({ cabin }) {
   const { isPending: isDeleting, mutate } = useMutation({
     mutationFn: deleteCabin,
     onSuccess: () => {
-      queryClint.invalidateQueries({ queryKey: ["cabins"] });
       toast.success("Cabin deleted successfully!");
+      queryClint.invalidateQueries({ queryKey: ["cabins"] });
     },
     onError: () => {
       toast.error("Failed to delete cabin. Please try again");
